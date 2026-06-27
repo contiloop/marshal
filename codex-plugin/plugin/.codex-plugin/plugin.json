@@ -28,6 +28,11 @@
 			"Hooks",
 			"Workflow",
 			"Context Injection"
+		],
+		"defaultPrompt": [
+			"Show the current Marshal squad status.",
+			"Continue the active Marshal squad.",
+			"Create a Marshal handover packet."
 		]
 	}
 }

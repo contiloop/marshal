@@ -35,30 +35,47 @@ marshal --version        # confirm it resolves on PATH
 
 ```
 marshal/codex-plugin/
-  marketplace.json            # marketplace; source -> "./plugin"
+  .agents/plugins/marketplace.json # marketplace; source -> "./plugin"
+  marketplace.json            # plain catalog mirror for tools that read root JSON
   plugin/
     .codex-plugin/plugin.json # plugin manifest (name "marshal")
     hooks/*.json              # the 3 hook -> `marshal hook <event>` bindings
   README.md
 ```
 
-This mirrors the canonical Codex marketplace layout, where the marketplace file
-sits a level above the plugin directory (compare
-`oh-my-openagent/packages/omo-codex/marketplace.json` with its plugin in
-`oh-my-openagent/packages/omo-codex/plugin/`).
+The repo root also includes `.agents/plugins/marketplace.json`, so either the
+whole Marshal repo or this subdirectory can be registered as a Codex marketplace.
 
 ## Enable the plugin in Codex
 
-1. Register this directory as a marketplace with your Codex CLI / app (point it at
-   `marshal/codex-plugin/`; the marketplace `source` resolves the plugin in
-   `./plugin`).
-2. Enable the `marshal` plugin (`marshal@marshal`) in `~/.codex/config.toml`.
+1. Register either the Marshal repo root or this `codex-plugin/` directory as a
+   marketplace:
+
+   ```bash
+   codex plugin marketplace add /path/to/marshal
+   # or, for this subdirectory only:
+   codex plugin marketplace add /path/to/marshal/codex-plugin
+   ```
+
+   For the GitHub-hosted repo, use the same marketplace name after adding the repo:
+
+   ```bash
+   codex plugin marketplace add contiloop/marshal --ref main
+   codex plugin add marshal@marshal
+   ```
+
+2. Install and enable the `marshal` plugin:
+
+   ```bash
+   codex plugin add marshal@marshal
+   ```
+
 3. Start a Codex session in a repo that has a Marshal platoon
    (`marshal init ...`). On each turn the `UserPromptSubmit` hook injects squad
    status, and `Stop`/`SubagentStop` keep Codex working an active squad.
 
-The exact marketplace/enable keys depend on your Codex version; the load contract
-is only that Codex fires the three events at the commands above.
+The exact marketplace source can be local or Git-backed. The load contract is
+only that Codex fires the three events at the commands above.
 
 ## Relationship to OMO
 

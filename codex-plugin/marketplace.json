@@ -6,7 +6,10 @@
 	"plugins": [
 		{
 			"name": "marshal",
-			"source": "./plugin",
+			"source": {
+				"source": "local",
+				"path": "./plugin"
+			},
 			"category": "Developer Tools",
 			"policy": {
 				"installation": "AVAILABLE",
