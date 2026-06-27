@@ -9,13 +9,24 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final, NoReturn
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
 from marshal_cli import __version__
+from marshal_cli.conversation_cli import run_conversation_command
 from marshal_cli.delegate import run_delegate_command
 from marshal_cli.init_cli import run_init_command
 from marshal_cli.ledger import run_ledger_command
 from marshal_cli.models import JsonObject, Report, ValidationError
+from marshal_cli.operate_cli import (
+    run_abort_command,
+    run_complete_command,
+    run_dispatch_command,
+    run_evidence_command,
+    run_handover_command,
+    run_next_command,
+    run_run_start_work_command,
+    run_status_command,
+)
 from marshal_cli.squad_state import initialize_squad_state, route_squad_report
 from marshal_cli.start_gate_cli import run_start_gate_command
 
@@ -27,7 +38,16 @@ COMMAND_HELP: Final = """commands:
   route                route a stage report through the Squad Leader
   ledger append        append one attempt ledger event
   ledger latest        print active-attempt ledger events
-  delegate-start-work  emit the start-work delegation payload"""
+  delegate-start-work  emit the start-work payload (manual mode)
+  status               show live platoon and squad status
+  next                 print squads whose dependencies are satisfied
+  run-start-work       invoke the external start-work runner (adapter mode)
+  dispatch             dispatch a runnable squad (dependency-gated)
+  handover             emit a handover packet for the next agent
+  evidence check       verify active-attempt ledger evidence files exist
+  complete             record an evidence-backed done claim
+  abort                abort one squad or every active squad
+  conversation         post/list/answer Platoon Leader queue questions"""
 STATE_COMMAND_HELP: Final = """commands:
   state init  create a squad state artifact from an assignment packet"""
 
@@ -127,22 +147,11 @@ def run(arguments: Sequence[str]) -> int:
 
     command = arguments[0]
     remaining = arguments[1:]
-    if command == "init":
-        result = run_init_command(remaining)
-    elif command == "state":
-        result = _run_state(remaining)
-    elif command == "route":
-        result = _run_route(remaining)
-    elif command == "ledger":
-        result = run_ledger_command(remaining)
-    elif command == "start-gate":
-        result = run_start_gate_command(remaining)
-    elif command == "delegate-start-work":
-        result = run_delegate_command(remaining)
-    else:
+    handler = _COMMANDS.get(command)
+    if handler is None:
         parser = build_parser()
-        result = _parser_error(parser, f"unknown command: {command}")
-    return result
+        return _parser_error(parser, f"unknown command: {command}")
+    return handler(remaining)
 
 
 def _run_state(arguments: Sequence[str]) -> int:
@@ -213,6 +222,25 @@ def _route_arguments(parsed: _RouteNamespace) -> _RouteArguments:
         },
     )
     return _RouteArguments(root=parsed.root, squad_id=parsed.squad_id, report=report)
+
+
+_COMMANDS: Final[dict[str, Callable[[Sequence[str]], int]]] = {
+    "init": run_init_command,
+    "state": _run_state,
+    "route": _run_route,
+    "ledger": run_ledger_command,
+    "start-gate": run_start_gate_command,
+    "delegate-start-work": run_delegate_command,
+    "status": run_status_command,
+    "next": run_next_command,
+    "run-start-work": run_run_start_work_command,
+    "dispatch": run_dispatch_command,
+    "handover": run_handover_command,
+    "evidence": run_evidence_command,
+    "complete": run_complete_command,
+    "abort": run_abort_command,
+    "conversation": run_conversation_command,
+}
 
 
 def _write_result(result: JsonObject) -> None:

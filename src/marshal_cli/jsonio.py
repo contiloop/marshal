@@ -82,6 +82,12 @@ def append_jsonl(path: str | Path, data: JsonObject) -> None:
         raise JsonIOError(safe_path, "failed to append JSONL artifact") from error
 
 
+def parse_json_object(text: str, source: Path) -> JsonObject:
+    """Parse one JSON object from text (e.g. a single JSONL ledger line)."""
+    decoded = _JsonReader(text, source).parse()
+    return _json_object_from_decoded(decoded, source)
+
+
 def _json_object_from_decoded(decoded: JsonValue, source: Path) -> JsonObject:
     if isinstance(decoded, dict):
         return decoded
@@ -285,6 +291,7 @@ __all__ = [
     "JsonScalar",
     "JsonValue",
     "append_jsonl",
+    "parse_json_object",
     "read_json",
     "write_json",
 ]

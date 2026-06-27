@@ -17,6 +17,7 @@ from marshal_cli.models import (
     JsonObject,
     PlatoonAssignment,
     SquadState,
+    Stage,
     StartGateRecord,
     ValidationError,
     validate_squad_id,
@@ -151,6 +152,14 @@ def _validate_squad_artifacts(
     if state.squad_id != squad_id:
         reason = "state belongs to a different squad"
         raise ValidationError(DELEGATION_CONTEXT, "state", squad_id, reason)
+    if state.current_stage is Stage.ABORTED:
+        reason = "squad is aborted; delegation and start-work are blocked"
+        stage = state.current_stage.value
+        raise ValidationError(DELEGATION_CONTEXT, "state", stage, reason)
+    if state.current_stage is Stage.DONE:
+        reason = "squad is already done; nothing to delegate"
+        stage = state.current_stage.value
+        raise ValidationError(DELEGATION_CONTEXT, "state", stage, reason)
     if start_gate.squad_id != squad_id:
         reason = "start gate belongs to a different squad"
         raise ValidationError(DELEGATION_CONTEXT, "start gate", squad_id, reason)
