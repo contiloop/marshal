@@ -9,10 +9,15 @@ event opens an item and a matching `answer` event resolves it.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Final
 
+from marshal_cli.conversation_models import (
+    AnswerResult,
+    AskResult,
+    Question,
+    QueueView,
+)
 from marshal_cli.jsonio import JsonIOError, append_jsonl, parse_json_object
 from marshal_cli.models import (
     JsonObject,
@@ -29,98 +34,6 @@ CONVERSATION_CONTEXT: Final = "conversation"
 _QUESTION_SEGMENTS: Final = ("platoon", "questions.jsonl")
 _QUESTION_KIND: Final = "question"
 _ANSWER_KIND: Final = "answer"
-
-
-@dataclass(frozen=True, slots=True)
-class Question:
-    """A queued user-facing question and its resolution, if any."""
-
-    question_id: str
-    squad_id: str
-    source: ReportSource
-    question: str
-    ts: str
-    answer: str | None
-    answered_ts: str | None
-
-    @property
-    def status(self) -> str:
-        """Return whether the question is pending or answered."""
-        return "answered" if self.answer is not None else "pending"
-
-    def to_jsonable(self) -> JsonObject:
-        """Return a JSON-compatible question object."""
-        return {
-            "question_id": self.question_id,
-            "squad_id": self.squad_id,
-            "source": self.source.value,
-            "question": self.question,
-            "ts": self.ts,
-            "status": self.status,
-            "answer": self.answer,
-            "answered_ts": self.answered_ts,
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class AskResult:
-    """Result of posting one question to the queue."""
-
-    question_id: str
-    squad_id: str
-    source: ReportSource
-    question: str
-    queue_path: Path
-
-    def to_jsonable(self) -> JsonObject:
-        """Return a JSON-compatible ask result object."""
-        return {
-            "question_id": self.question_id,
-            "squad_id": self.squad_id,
-            "source": self.source.value,
-            "question": self.question,
-            "status": "pending",
-            "queue_path": str(self.queue_path),
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class AnswerResult:
-    """Result of answering one queued question."""
-
-    question_id: str
-    answer: str
-    queue_path: Path
-
-    def to_jsonable(self) -> JsonObject:
-        """Return a JSON-compatible answer result object."""
-        return {
-            "question_id": self.question_id,
-            "answer": self.answer,
-            "status": "answered",
-            "queue_path": str(self.queue_path),
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class QueueView:
-    """The folded view of every queued question."""
-
-    pending: tuple[Question, ...]
-    answered: tuple[Question, ...]
-    queue_path: Path
-
-    def to_jsonable(self, *, include_answered: bool) -> JsonObject:
-        """Return a JSON-compatible queue view object."""
-        view: JsonObject = {
-            "pending": [question.to_jsonable() for question in self.pending],
-            "pending_count": len(self.pending),
-            "answered_count": len(self.answered),
-            "queue_path": str(self.queue_path),
-        }
-        if include_answered:
-            view["answered"] = [question.to_jsonable() for question in self.answered]
-        return view
 
 
 def ask_question(

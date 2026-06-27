@@ -81,14 +81,15 @@ class StartWorkResult:
         }
 
     def exit_code(self) -> int:
-        """Return 0 on success, 1 when the runner reported failure."""
+        """Return 0 on success or preview, 1 only when the runner failed."""
+        if self.dry_run:
+            return 0
         return 0 if self.dispatched else 1
 
 
 def execute_start_work(request: StartWorkRequest) -> StartWorkResult:
     """Run (or preview) the configured external start-work runner for a squad."""
     payload = build_delegation_payload(request.root, request.squad_id)
-    runner_argv = _resolve_runner(request.runner)
     artifact_root = ArtifactRoot.from_user_input(request.root)
     squad_id = validate_squad_id(request.squad_id)
     state = _read_state(artifact_root, squad_id)
@@ -97,7 +98,7 @@ def execute_start_work(request: StartWorkRequest) -> StartWorkResult:
         return StartWorkResult(
             squad_id=squad_id,
             mode="dry-run",
-            runner=runner_argv,
+            runner=_resolve_runner_optional(request.runner),
             command=payload.command,
             active_attempt=payload.active_attempt,
             dry_run=True,
@@ -108,6 +109,7 @@ def execute_start_work(request: StartWorkRequest) -> StartWorkResult:
             payload=payload,
         )
 
+    runner_argv = _resolve_runner(request.runner)
     completed = _run_runner(runner_argv, payload, artifact_root, request.timeout)
     dispatched = completed.returncode == 0
     _record_dispatch(artifact_root, squad_id, state, runner_argv, completed.returncode)
@@ -168,6 +170,11 @@ def _ensure_dispatchable(target: SquadStatus) -> None:
     if not target.start_gate.fresh:
         reason = "no fresh start gate; run marshal start-gate for the current stage"
         raise ValidationError(DISPATCH_CONTEXT, "squad", target.squad_id, reason)
+
+
+def _resolve_runner_optional(runner: str | None) -> tuple[str, ...]:
+    source = runner or os.environ.get(RUNNER_ENV_VAR)
+    return tuple(shlex.split(source)) if source else ()
 
 
 def _resolve_runner(runner: str | None) -> tuple[str, ...]:
@@ -235,15 +242,17 @@ def _record_dispatch(
     runner_argv: tuple[str, ...],
     returncode: int,
 ) -> None:
-    runner_display = " ".join(runner_argv)
+    # Only a clean exit counts as "dispatched"; a failed runner is recorded as a
+    # distinct event so the squad is not treated as started and stays runnable.
+    event = "dispatched" if returncode == 0 else "dispatch-failed"
     request = LedgerAppendRequest(
         squad_id=squad_id,
-        event="dispatched",
+        event=event,
         attempt=state.active_attempt,
         stage=state.current_stage.value,
         task="run-start-work",
         detail=f"runner exited {returncode}",
-        findings=(runner_display,),
+        findings=(" ".join(runner_argv),),
         evidence=(),
     )
     _ = append_ledger_entry(artifact_root.root, request)

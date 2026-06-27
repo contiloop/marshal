@@ -14,19 +14,16 @@ if TYPE_CHECKING:
 from marshal_cli import __version__
 from marshal_cli.conversation_cli import run_conversation_command
 from marshal_cli.delegate import run_delegate_command
-from marshal_cli.init_cli import run_init_command
-from marshal_cli.ledger import run_ledger_command
-from marshal_cli.models import JsonObject, Report, ValidationError
-from marshal_cli.operate_cli import (
-    run_abort_command,
-    run_complete_command,
+from marshal_cli.dispatch_cli import (
     run_dispatch_command,
-    run_evidence_command,
-    run_handover_command,
-    run_next_command,
     run_run_start_work_command,
-    run_status_command,
 )
+from marshal_cli.init_cli import run_init_command
+from marshal_cli.inspect_cli import run_evidence_command, run_handover_command
+from marshal_cli.ledger import run_ledger_command
+from marshal_cli.lifecycle_cli import run_abort_command, run_complete_command
+from marshal_cli.models import JsonObject, Report, ValidationError
+from marshal_cli.overview_cli import run_next_command, run_status_command
 from marshal_cli.squad_state import initialize_squad_state, route_squad_report
 from marshal_cli.start_gate_cli import run_start_gate_command
 

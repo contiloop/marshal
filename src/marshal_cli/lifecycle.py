@@ -9,15 +9,19 @@ waves can advance.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Final
 
 from marshal_cli.evidence import resolve_evidence_path
 from marshal_cli.jsonio import JsonIOError, read_json, write_json
 from marshal_cli.ledger_core import LedgerAppendRequest, append_ledger_entry
+from marshal_cli.lifecycle_models import (
+    AbortAllResult,
+    AbortResult,
+    CompleteResult,
+)
 from marshal_cli.models import (
-    JsonObject,
     SquadState,
     Stage,
     StageHistoryEntry,
@@ -31,67 +35,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 LIFECYCLE_CONTEXT: Final = "lifecycle"
-
-
-@dataclass(frozen=True, slots=True)
-class AbortResult:
-    """Outcome of aborting one squad."""
-
-    squad_id: str
-    previous_stage: str
-    current_stage: str
-    active_attempt: int
-    reason: str
-    state_path: Path
-
-    def to_jsonable(self) -> JsonObject:
-        """Return a JSON-compatible abort result object."""
-        return {
-            "squad_id": self.squad_id,
-            "previous_stage": self.previous_stage,
-            "current_stage": self.current_stage,
-            "active_attempt": self.active_attempt,
-            "reason": self.reason,
-            "state_path": str(self.state_path),
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class AbortAllResult:
-    """Outcome of aborting every active squad in the platoon."""
-
-    aborted: tuple[AbortResult, ...]
-    skipped: tuple[str, ...]
-
-    def to_jsonable(self) -> JsonObject:
-        """Return a JSON-compatible platoon abort result object."""
-        return {
-            "aborted": [result.to_jsonable() for result in self.aborted],
-            "skipped": list(self.skipped),
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class CompleteResult:
-    """Outcome of recording an evidence-backed done claim."""
-
-    squad_id: str
-    previous_stage: str
-    current_stage: str
-    active_attempt: int
-    evidence: tuple[str, ...]
-    state_path: Path
-
-    def to_jsonable(self) -> JsonObject:
-        """Return a JSON-compatible complete result object."""
-        return {
-            "squad_id": self.squad_id,
-            "previous_stage": self.previous_stage,
-            "current_stage": self.current_stage,
-            "active_attempt": self.active_attempt,
-            "evidence": list(self.evidence),
-            "state_path": str(self.state_path),
-        }
 
 
 def abort_squad(root: str | Path, squad_id: str, reason: str) -> AbortResult:
