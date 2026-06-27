@@ -1,0 +1,16 @@
+{
+	"hooks": {
+		"SubagentStop": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "marshal hook subagent-stop",
+						"timeout": 10,
+						"statusMessage": "(Marshal) Checking squad continuation"
+					}
+				]
+			}
+		]
+	}
+}

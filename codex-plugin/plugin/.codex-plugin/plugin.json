@@ -1,0 +1,33 @@
+{
+	"name": "marshal",
+	"version": "0.1.0",
+	"description": "Marshal control-plane Codex hooks: squad continuation and live platoon status.",
+	"author": {
+		"name": "contiloop"
+	},
+	"license": "MIT",
+	"keywords": [
+		"codex",
+		"codex-plugin",
+		"marshal",
+		"orchestration",
+		"hooks"
+	],
+	"hooks": [
+		"./hooks/user-prompt-submit-marshal-status.json",
+		"./hooks/stop-marshal-continuation.json",
+		"./hooks/subagent-stop-marshal-continuation.json"
+	],
+	"interface": {
+		"displayName": "Marshal",
+		"shortDescription": "Marshal control-plane for Codex",
+		"longDescription": "Marshal owns Codex's UserPromptSubmit, Stop, and SubagentStop hooks so the platoon/squad control-plane is the entry point: it injects live squad status and keeps Codex working an active squad until the stage is done. Codex, OMO, and LazyCodex are execution substrates Marshal directs.",
+		"developerName": "contiloop",
+		"category": "Developer Tools",
+		"capabilities": [
+			"Hooks",
+			"Workflow",
+			"Context Injection"
+		]
+	}
+}

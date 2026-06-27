@@ -1,0 +1,16 @@
+{
+	"hooks": {
+		"UserPromptSubmit": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "marshal hook user-prompt-submit",
+						"timeout": 10,
+						"statusMessage": "(Marshal) Injecting squad status"
+					}
+				]
+			}
+		]
+	}
+}

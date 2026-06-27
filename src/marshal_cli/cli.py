@@ -18,6 +18,7 @@ from marshal_cli.dispatch_cli import (
     run_dispatch_command,
     run_run_start_work_command,
 )
+from marshal_cli.hook_cli import run_hook_command
 from marshal_cli.init_cli import run_init_command
 from marshal_cli.inspect_cli import run_evidence_command, run_handover_command
 from marshal_cli.ledger import run_ledger_command
@@ -44,7 +45,8 @@ COMMAND_HELP: Final = """commands:
   evidence check       verify active-attempt ledger evidence files exist
   complete             record an evidence-backed done claim
   abort                abort one squad or every active squad
-  conversation         post/list/answer Platoon Leader queue questions"""
+  conversation         post/list/answer Platoon Leader queue questions
+  hook                 Codex hook entry points (prompt/stop/subagent-stop)"""
 STATE_COMMAND_HELP: Final = """commands:
   state init  create a squad state artifact from an assignment packet"""
 
@@ -237,6 +239,7 @@ _COMMANDS: Final[dict[str, Callable[[Sequence[str]], int]]] = {
     "complete": run_complete_command,
     "abort": run_abort_command,
     "conversation": run_conversation_command,
+    "hook": run_hook_command,
 }
 
 

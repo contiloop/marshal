@@ -1,0 +1,16 @@
+{
+	"hooks": {
+		"Stop": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "marshal hook stop",
+						"timeout": 10,
+						"statusMessage": "(Marshal) Checking squad continuation"
+					}
+				]
+			}
+		]
+	}
+}

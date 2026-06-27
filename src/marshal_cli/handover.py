@@ -41,6 +41,11 @@ _NEXT_ACTION: Final[dict[Stage, str]] = {
 }
 
 
+def next_action(stage: Stage) -> str:
+    """Return the plain next-action summary for a squad stage."""
+    return _NEXT_ACTION[stage]
+
+
 @dataclass(frozen=True, slots=True)
 class HandoverPacket:
     """A self-contained handover packet for one squad."""
@@ -85,7 +90,7 @@ def build_handover(root: str | Path, squad_id: str) -> HandoverPacket:
     start_gate = _read_optional(start_gate_path)
     latest = latest_attempt_events(artifact_root.root, validated_squad_id)
     platoon = collect_platoon_status(artifact_root.root)
-    next_action = _NEXT_ACTION[state.current_stage]
+    next_action_text = next_action(state.current_stage)
 
     body: JsonObject = {
         "assignment": assignment.to_jsonable(),
@@ -93,7 +98,7 @@ def build_handover(root: str | Path, squad_id: str) -> HandoverPacket:
         "start_gate": start_gate,
         "latest_ledger_events": list(latest.event_lines),
         "platoon": platoon.to_jsonable(),
-        "next_action": next_action,
+        "next_action": next_action_text,
         "artifact_paths": {
             "assignment": str(assignment_path),
             "state": str(state_path),
@@ -107,7 +112,7 @@ def build_handover(root: str | Path, squad_id: str) -> HandoverPacket:
         squad_id=validated_squad_id,
         current_stage=state.current_stage.value,
         active_attempt=state.active_attempt,
-        next_action=next_action,
+        next_action=next_action_text,
         handover_path=handover_path,
         body=body,
     )
@@ -127,4 +132,4 @@ def _read_optional(path: Path) -> JsonObject | None:
         return None
 
 
-__all__ = ["HandoverPacket", "build_handover"]
+__all__ = ["HandoverPacket", "build_handover", "next_action"]

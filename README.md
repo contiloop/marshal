@@ -122,3 +122,26 @@ uv run marshal conversation ask --root "$QA_ROOT" --squad squad-a --source worke
 uv run marshal conversation list --root "$QA_ROOT"
 uv run marshal conversation answer --root "$QA_ROOT" --id q-0001 --answer "Use 300s"
 ```
+
+## Codex hook entry points
+
+Marshal can be the control-plane entry point for a Codex session. The `hook`
+command reads a Codex hook payload on stdin (only a non-empty `cwd` is required)
+and writes the Codex hook response on stdout. Malformed or absent input yields
+empty output and exit 0, so a hook can never crash or stall Codex.
+
+- `hook user-prompt-submit` — injects the live platoon/squad status as additional
+  context; silent when no platoon exists.
+- `hook stop` / `hook subagent-stop` — blocks (continues) when a squad is active
+  (`sync`/`plan`/`work`/`review`) with a fresh, passed start gate; silent when no
+  such squad exists, when `stop_hook_active` is set, or under context pressure.
+
+```bash
+printf '{"cwd":"%s"}' "$QA_ROOT" | uv run marshal hook stop
+printf '{"cwd":"%s"}' "$QA_ROOT" | uv run marshal hook user-prompt-submit
+```
+
+The `codex-plugin/` directory packages these as a Codex plugin so Marshal owns the
+`UserPromptSubmit`, `Stop`, and `SubagentStop` events directly (Marshal-first; OMO
+and LazyCodex become execution substrates). Install `marshal` on PATH
+(`uv tool install .`) and see [`codex-plugin/README.md`](codex-plugin/README.md).
