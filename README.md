@@ -80,6 +80,30 @@ Marshal is stage/attempt centric. A worker is not considered safely active
 because a checkbox exists; it must have a live squad state, a fresh start gate,
 and an active attempt ledger.
 
+## PL-SL Workflow
+
+PL means Platoon Leader. SL means Squad Leader. PL owns user intent, dependency
+waves, and cross-squad decisions. Each SL owns one squad's assignment, stage,
+start gate, active attempt, evidence, and handover.
+
+```mermaid
+flowchart TD
+  U["User intent and constraints"] --> PL["PL: Platoon Leader"]
+  PL --> C["Platoon checklist<br/>.omo/platoon/checklist.json"]
+  C --> A["Squad assignment packets<br/>.omo/squad/*/assignment.json"]
+  A --> SL["SL: Squad Leader"]
+  SL --> G["Start gate<br/>fresh stage and attempt"]
+  G --> W["Worker<br/>Codex, OMO, LazyCodex, shell runner"]
+  W --> L["Attempt ledger<br/>and evidence receipts"]
+  L --> SL
+  SL --> R{"Stage result"}
+  R -->|"needs user decision"| Q["Question queue<br/>.omo/platoon/questions.jsonl"]
+  Q --> PL
+  R -->|"handover or resume"| H["Handover packet<br/>.omo/squad/&lt;id&gt;/handover.json"]
+  R -->|"done"| D["Squad complete<br/>unlock dependent squads"]
+  D --> PL
+```
+
 ## Install
 
 Install the CLI first. The Codex hooks call `marshal` directly, so it must be on
@@ -147,7 +171,7 @@ Hooks are quiet by contract. Malformed input, missing `cwd`, no platoon,
 `stop_hook_active`, or context-pressure transcripts yield empty stdout and exit
 0 so Marshal never crashes Codex.
 
-## MVP Workflow
+## End-To-End Workflow
 
 The `--scope` format is:
 
